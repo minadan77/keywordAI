@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador de Imágenes AI</title>
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.jsdelivr.net/npm/@huggingface/inference@1.5.1/dist/index.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -95,83 +94,4 @@
         // Registro del Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js')
-                .then(registration => console.log('Service Worker registrado'))
-                .catch(error => console.log('Error al registrar el Service Worker:', error));
-        }
-
-        const imageUpload = document.getElementById('imageUpload');
-        const imagePreview = document.getElementById('imagePreview');
-        const result = document.getElementById('result');
-        const loading = document.getElementById('loading');
-
-        imageUpload.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    imagePreview.src = event.target.result;
-                    imagePreview.style.display = 'block';
-                    result.innerHTML = '';
-                    loading.style.display = 'block';
-                    analyzeImage(file);
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        async function analyzeImage(file) {
-            try {
-                console.log('Iniciando análisis de imagen');
-                const imageData = await file.arrayBuffer();
-                const response = await fetch('https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer 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',
-                        'Content-Type': 'application/octet-stream'
-                    },
-                    body: imageData
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const resultData = await response.json();
-
-                console.log('Respuesta recibida:', resultData);
-
-                if (!resultData || !resultData.generated_text) {
-                    throw new Error('La respuesta de la API no contiene el texto generado.');
-                }
-
-                const description = resultData.generated_text;
-                const title = generateTitle(description);
-                const keywords = generateKeywords(description);
-
-                result.innerHTML = `
-                    <h2>Resultados:</h2>
-                    <p><strong>Título:</strong> ${title}</p>
-                    <p><strong>Descripción:</strong> ${description}</p>
-                    <p><strong>Palabras clave:</strong></p>
-                    <div class="keywords">
-                        ${keywords.map(keyword => `<span class="keyword">${keyword}</span>`).join('')}
-                    </div>
-                `;
-            } catch (error) {
-                console.error('Error al analizar la imagen:', error);
-                result.innerHTML = `<p>Error: ${error.message}</p>`;
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        function generateTitle(description) {
-            return description.charAt(0).toUpperCase() + description.slice(1);
-        }
-
-        function generateKeywords(description) {
-            const words = description.toLowerCase().split(/\W+/);
-            const uniqueWords = [...new Set(words)];
-            return uniqueWords.filter(word => word.length > 3).slice(0, 30);
-        }
-    </script>
-</body>
-</html>
+                .then(registration => console.log('Service Worker registrad
