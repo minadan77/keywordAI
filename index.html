@@ -3,31 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador de Imágenes</title>
+    <title>Analizador de Imágenes AI</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #4285f4;
             text-align: center;
+            margin-bottom: 30px;
+        }
+        #imageUpload {
+            display: none;
+        }
+        .upload-btn {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: background-color 0.3s;
+        }
+        .upload-btn:hover {
+            background-color: #3367d6;
         }
         #imagePreview {
             max-width: 100%;
             margin-top: 20px;
+            border-radius: 8px;
+            display: none;
         }
         #result {
             margin-top: 20px;
             text-align: left;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .keyword {
+            background-color: #3367d6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        #loading {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Analizador de Imágenes</h1>
-    <input type="file" id="imageUpload" accept="image/*">
-    <img id="imagePreview" src="" alt="Vista previa de la imagen">
-    <div id="result"></div>
+    <div class="container">
+        <h1>Analizador de Imágenes AI</h1>
+        <input type="file" id="imageUpload" accept="image/*">
+        <label for="imageUpload" class="upload-btn">Subir Imagen</label>
+        <img id="imagePreview" src="" alt="Vista previa de la imagen">
+        <div id="loading">Analizando imagen...</div>
+        <div id="result"></div>
+    </div>
 
     <script>
         // Registro del Service Worker
@@ -38,6 +99,7 @@
         const imageUpload = document.getElementById('imageUpload');
         const imagePreview = document.getElementById('imagePreview');
         const result = document.getElementById('result');
+        const loading = document.getElementById('loading');
 
         // Función para desofuscar el token
         function deobfuscateToken(obfuscated) {
@@ -53,6 +115,9 @@
 
             reader.onload = function(event) {
                 imagePreview.src = event.target.result;
+                imagePreview.style.display = 'block';
+                result.innerHTML = '';
+                loading.style.display = 'block';
                 analyzeImage(event.target.result);
             }
 
@@ -61,42 +126,48 @@
 
         async function analyzeImage(imageData) {
             const token = deobfuscateToken(obfuscatedToken);
-            // Aquí utilizaremos la API de Hugging Face para el análisis de la imagen
-            const response = await fetch(
-                "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                    method: "POST",
-                    body: imageData.split(',')[1]
+            try {
+                const response = await fetch(
+                    "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                        method: "POST",
+                        body: imageData.split(',')[1]
+                    }
+                );
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
                 }
-            );
-            const data = await response.json();
-            
-            // Generar título y palabras clave basadas en la descripción
-            const title = generateTitle(data[0].generated_text);
-            const keywords = generateKeywords(data[0].generated_text);
 
-            result.innerHTML = `
-                <h2>Resultados:</h2>
-                <p><strong>Título:</strong> ${title}</p>
-                <p><strong>Palabras clave:</strong> ${keywords.join(', ')}</p>
-            `;
+                const description = data[0].generated_text;
+                const title = generateTitle(description);
+                const keywords = generateKeywords(description);
+
+                result.innerHTML = `
+                    <h2>Resultados:</h2>
+                    <p><strong>Título:</strong> ${title}</p>
+                    <p><strong>Palabras clave:</strong></p>
+                    <div class="keywords">
+                        ${keywords.map(keyword => `<span class="keyword">${keyword}</span>`).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                result.innerHTML = `<p>Error: ${error.message}</p>`;
+            } finally {
+                loading.style.display = 'none';
+            }
         }
 
         function generateTitle(description) {
-            // Simplemente convertimos la primera letra en mayúscula y limitamos a 10 palabras
             return description.charAt(0).toUpperCase() + description.slice(1).split(' ').slice(0, 10).join(' ');
         }
 
         function generateKeywords(description) {
-            // Lista de palabras clave comunes en inglés para imágenes de stock
             const commonKeywords = ['nature', 'business', 'people', 'technology', 'food', 'travel', 'health', 'education', 'finance', 'sport', 'lifestyle', 'fashion', 'art', 'science', 'environment', 'animals', 'architecture', 'city', 'landscape', 'emotion', 'family', 'work', 'communication', 'transport', 'holiday', 'season', 'weather', 'culture', 'religion', 'politics'];
-            
-            // Combinar palabras de la descripción con palabras clave comunes
             const descriptionWords = description.toLowerCase().split(' ');
             const combinedKeywords = [...new Set([...descriptionWords, ...commonKeywords])];
-            
-            // Seleccionar aleatoriamente 30 palabras clave
             return combinedKeywords.sort(() => 0.5 - Math.random()).slice(0, 30);
         }
     </script>
