@@ -172,7 +172,7 @@
         function generateKeywords(description) {
             const words = description.toLowerCase().split(/\W+/);
             const uniqueWords = [...new Set(words)];
-            return uniqueWords.filter(word => word.length > 3).slice(0, 10);
+            return uniqueWords.filter(word => word.length > 3).slice(0, 30);
         }
     </script>
 </body>
