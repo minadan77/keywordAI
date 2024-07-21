@@ -4,7 +4,7 @@ self.addEventListener('install', (event) => {
             return cache.addAll([
                 '/',
                 '/index.html',
-                '/icon.png', // Asegúrate de que este archivo existe
+                '/icon.png',  // Asegúrate de que este archivo existe en tu proyecto
                 '/manifest.json',
                 '/service-worker.js'
             ]).catch((error) => {
