@@ -133,9 +133,16 @@
                     },
                     body: imageData
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const resultData = await response.json();
 
                 console.log('Respuesta recibida:', resultData);
+
+                if (!resultData.generated_text) {
+                    throw new Error('La respuesta de la API no contiene el texto generado.');
+                }
 
                 const description = resultData.generated_text;
                 const title = generateTitle(description);
