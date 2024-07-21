@@ -93,7 +93,9 @@
     <script>
         // Registro del Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => console.log('Service Worker registrado'))
+                .catch(error => console.log('Error al registrar el Service Worker:', error));
         }
 
         const imageUpload = document.getElementById('imageUpload');
@@ -110,10 +112,12 @@
         const obfuscatedToken = 'bG5RVVdRaE9HRlhYVUdFVXRGclFUd1RnZlRVb1FkTXB0X2Zo';
 
         imageUpload.addEventListener('change', function(e) {
+            console.log('Imagen seleccionada');
             const file = e.target.files[0];
             const reader = new FileReader();
 
             reader.onload = function(event) {
+                console.log('Imagen cargada');
                 imagePreview.src = event.target.result;
                 imagePreview.style.display = 'block';
                 result.innerHTML = '';
@@ -125,6 +129,7 @@
         });
 
         async function analyzeImage(imageData) {
+            console.log('Analizando imagen');
             const token = deobfuscateToken(obfuscatedToken);
             try {
                 const response = await fetch(
@@ -136,6 +141,7 @@
                     }
                 );
                 const data = await response.json();
+                console.log('Respuesta de la API:', data);
                 
                 if (data.error) {
                     throw new Error(data.error);
@@ -154,6 +160,7 @@
                     </div>
                 `;
             } catch (error) {
+                console.error('Error al analizar la imagen:', error);
                 result.innerHTML = `<p>Error: ${error.message}</p>`;
             } finally {
                 loading.style.display = 'none';
