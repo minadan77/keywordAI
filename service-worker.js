@@ -4,7 +4,9 @@ self.addEventListener('install', (event) => {
             return cache.addAll([
                 '/',
                 '/index.html',
-                '/icon.png'
+                '/icon.png',
+                '/manifest.json',
+                '/service-worker.js'
             ]);
         })
     );
