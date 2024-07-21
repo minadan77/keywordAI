@@ -4,10 +4,12 @@ self.addEventListener('install', (event) => {
             return cache.addAll([
                 '/',
                 '/index.html',
-                '/icon.png',
+                '/icon.png',  // Asegúrate de que este archivo exista
                 '/manifest.json',
                 '/service-worker.js'
-            ]);
+            ]).catch((error) => {
+                console.error('Error al añadir archivos a la caché:', error);
+            });
         })
     );
 });
