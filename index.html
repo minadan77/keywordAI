@@ -5,8 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador de Imágenes AI</title>
     <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/@huggingface/inference@1.5.1/dist/index.min.js"></script>
     <style>
-        /* ... (el estilo permanece igual) ... */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #4285f4;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        #imageUpload {
+            display: none;
+        }
+        .upload-btn {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: background-color 0.3s;
+        }
+        .upload-btn:hover {
+            background-color: #3367d6;
+        }
+        #imagePreview {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .keyword {
+            background-color: #3367d6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        #loading {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -32,55 +104,37 @@
         const result = document.getElementById('result');
         const loading = document.getElementById('loading');
 
-        // Función para desofuscar el token
-        function deobfuscateToken(obfuscated) {
-            return atob(obfuscated.split('').reverse().join(''));
-        }
-
-        // Token ofuscado
-        const obfuscatedToken = 'bG5RVVdRaE9HRlhYVUdFVXRGclFUd1RnZlRVb1FkTXB0X2Zo';
+        // Inicializa el cliente de Hugging Face Inference
+        const API_TOKEN = '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';
+        const hf = new HfInference(API_TOKEN);
 
         imageUpload.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(event) {
-                imagePreview.src = event.target.result;
-                imagePreview.style.display = 'block';
-                result.innerHTML = '';
-                loading.style.display = 'block';
-                analyzeImage(event.target.result);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                    result.innerHTML = '';
+                    loading.style.display = 'block';
+                    analyzeImage(file);
+                }
+                reader.readAsDataURL(file);
             }
-
-            reader.readAsDataURL(file);
         });
 
-        async function analyzeImage(imageData) {
-            const token = deobfuscateToken(obfuscatedToken);
+        async function analyzeImage(file) {
             try {
-                const response = await fetch(
-                    "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
-                    {
-                        headers: { 
-                            Authorization: `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        method: "POST",
-                        body: JSON.stringify({ inputs: imageData })
-                    }
-                );
+                console.log('Iniciando análisis de imagen');
+                const imageData = await file.arrayBuffer();
+                const response = await hf.imageToText({
+                    model: "Salesforce/blip-image-captioning-large",
+                    data: new Uint8Array(imageData)
+                });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                console.log('Respuesta recibida:', response);
 
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                const description = data[0].generated_text;
+                const description = response.generated_text;
                 const title = generateTitle(description);
                 const keywords = generateKeywords(description);
 
