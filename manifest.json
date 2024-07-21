@@ -1,0 +1,16 @@
+{
+    "name": "Analizador de Imágenes",
+    "short_name": "ImageAnalyzer",
+    "description": "Analiza imágenes y genera títulos y palabras clave en inglés",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4285f4",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
